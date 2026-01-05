@@ -1,33 +1,30 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { createNoteValidator, updateNoteValidator } from '#validators/note'
-
-// Simple in-memory storage for notes
-interface Note {
-  id: number
-  title: string
-  content: string
-  createdAt: Date
-}
-
-let notes: Note[] = []
-let nextId = 1
+import noteService from '#services/note_service'
 
 export default class NotesController {
-  /**
-   * GET /notes - Get all notes
-   */
-  async index({ response }: HttpContext) {
+  async index({ auth, response }: HttpContext) {
+    const user = auth.user!
+    const notes = await noteService.getAllByUser(user.id)
+
     return response.ok({
       success: true,
       data: notes,
     })
   }
 
-  /**
-   * GET /notes/:id - Get single note
-   */
-  async show({ params, response }: HttpContext) {
-    const note = notes.find((n) => n.id === Number(params.id))
+  async adminIndex({ response }: HttpContext) {
+    const notes = await noteService.getAll()
+
+    return response.ok({
+      success: true,
+      data: notes,
+    })
+  }
+
+  async show({ auth, params, response }: HttpContext) {
+    const user = auth.user!
+    const note = await noteService.findByIdForUser(Number(params.id), user.id)
 
     if (!note) {
       return response.notFound({
@@ -42,21 +39,10 @@ export default class NotesController {
     })
   }
 
-  /**
-   * POST /notes - Create new note
-   */
-  async store({ request, response }: HttpContext) {
-    // Validate request body using VineJS
+  async store({ auth, request, response }: HttpContext) {
+    const user = auth.user!
     const data = await request.validateUsing(createNoteValidator)
-
-    const note: Note = {
-      id: nextId++,
-      title: data.title,
-      content: data.content,
-      createdAt: new Date(),
-    }
-
-    notes.push(note)
+    const note = await noteService.create(user.id, data)
 
     return response.created({
       success: true,
@@ -65,53 +51,43 @@ export default class NotesController {
     })
   }
 
+  async update({ auth, params, request, response }: HttpContext) {
+    const user = auth.user!
+    const note = await noteService.findByIdForUser(Number(params.id), user.id)
 
-  /**
-   * PUT /notes/:id - Update a note
-   */
-  async update({ params, request, response }: HttpContext) {
-    const noteIndex = notes.findIndex((n) => n.id === Number(params.id))
-
-    if (noteIndex === -1) {
+    if (!note) {
       return response.notFound({
         success: false,
         message: 'Note not found',
       })
     }
 
-    // Validate request body
     const data = await request.validateUsing(updateNoteValidator)
-
-    // Update only provided fields
-    if (data.title) notes[noteIndex].title = data.title
-    if (data.content) notes[noteIndex].content = data.content
+    const updated = await noteService.update(note, data)
 
     return response.ok({
       success: true,
       message: 'Note updated successfully',
-      data: notes[noteIndex],
+      data: updated,
     })
   }
 
-  /**
-   * DELETE /notes/:id - Delete a note
-   */
-  async destroy({ params, response }: HttpContext) {
-    const noteIndex = notes.findIndex((n) => n.id === Number(params.id))
+  async destroy({ auth, params, response }: HttpContext) {
+    const user = auth.user!
+    const note = await noteService.findByIdForUser(Number(params.id), user.id)
 
-    if (noteIndex === -1) {
+    if (!note) {
       return response.notFound({
         success: false,
         message: 'Note not found',
       })
     }
 
-    const deleted = notes.splice(noteIndex, 1)[0]
+    await noteService.delete(note)
 
     return response.ok({
       success: true,
       message: 'Note deleted successfully',
-      data: deleted,
     })
   }
 }

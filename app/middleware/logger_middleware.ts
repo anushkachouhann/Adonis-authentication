@@ -1,10 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
+ 
 
-/**
- * Custom middleware to log all incoming requests
- * This demonstrates how to create custom middleware in AdonisJS
- */
 export default class LoggerMiddleware {
   async handle(ctx: HttpContext, next: NextFn) {
     const start = Date.now()

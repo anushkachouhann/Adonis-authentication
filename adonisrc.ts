@@ -6,7 +6,10 @@ export default defineConfig({
   | Commands
   |--------------------------------------------------------------------------
   */
-  commands: [() => import('@adonisjs/core/commands')],
+  commands: [
+    () => import('@adonisjs/core/commands'),
+    () => import('@adonisjs/lucid/commands'),
+  ],
 
   /*
   |--------------------------------------------------------------------------
@@ -15,12 +18,16 @@ export default defineConfig({
   */
   providers: [
     () => import('@adonisjs/core/providers/app_provider'),
+    () => import('@adonisjs/core/providers/hash_provider'),
     {
       file: () => import('@adonisjs/core/providers/repl_provider'),
       environment: ['repl', 'test'],
     },
     () => import('@adonisjs/core/providers/vinejs_provider'),
     () => import('@adonisjs/cors/cors_provider'),
+    () => import('@adonisjs/lucid/database_provider'),
+    () => import('@adonisjs/auth/auth_provider'),
+    () => import('@adonisjs/session/session_provider'),
   ],
 
   /*
