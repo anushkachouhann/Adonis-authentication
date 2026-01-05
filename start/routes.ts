@@ -3,6 +3,7 @@ import { middleware } from './kernel.js'
 
 const AuthController = () => import('#controllers/auth_controller')
 const NotesController = () => import('#controllers/notes_controller')
+const SocialAuthController = () => import('#controllers/social_auth_controller')
 
 
 // Health check route
@@ -15,6 +16,12 @@ router
   .group(() => {
     router.post('/register', [AuthController, 'register'])
     router.post('/login', [AuthController, 'login'])
+
+    // Social auth routes
+    router.get('/google', [SocialAuthController, 'googleRedirect'])
+    router.get('/google/callback', [SocialAuthController, 'googleCallback'])
+    router.get('/github', [SocialAuthController, 'githubRedirect'])
+    router.get('/github/callback', [SocialAuthController, 'githubCallback'])
   })
   .prefix('/auth')
 
