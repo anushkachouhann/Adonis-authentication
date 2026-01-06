@@ -1,5 +1,6 @@
 import router from '@adonisjs/core/services/router'
 import { middleware } from './kernel.js'
+const UploadsController = () => import('#controllers/uploads_controller')
 
 const AuthController = () => import('#controllers/auth_controller')
 const NotesController = () => import('#controllers/notes_controller')
@@ -53,3 +54,19 @@ router
   })
   .prefix('/admin')
   .use([middleware.auth(), middleware.role({ roles: ['admin'] })])
+
+
+// Upload routes (protected)
+router
+  .group(() => {
+    router.post('/image', [UploadsController, 'uploadImage'])
+    router.post('/video', [UploadsController, 'uploadVideo'])
+    router.post('/file', [UploadsController, 'uploadFile'])
+    router.get('/list', [UploadsController, 'index']) // ?type=image|video|file
+    router.delete('/:id', [UploadsController, 'delete'])
+  })
+  .prefix('/upload')
+  .use(middleware.auth())
+
+// Serve uploaded files (public) - /uploads/images/:filename, /uploads/videos/:filename, /uploads/files/:filename
+router.get('/uploads/:type/:filename', [UploadsController, 'show'])
